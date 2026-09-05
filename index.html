@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>@orkhanmrzedits</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<style>
+  :root{
+    --bg:#05090a;
+    --bg-2:#081011;
+    --panel:#0d1517;
+    --panel-2:#0f1a1c;
+    --border:rgba(255,255,255,0.07);
+    --border-hi:rgba(255,255,255,0.14);
+    --teal:#2ff0c4;
+    --teal-dim:#1c8f77;
+    --magenta:#ff3d7f;
+    --magenta-dim:#8f2149;
+    --text:#eaf5f2;
+    --muted:#84a19b;
+    --muted-2:#5a716c;
+    --glow-teal:rgba(47,240,196,0.28);
+    --glow-magenta:rgba(255,61,127,0.22);
+  }
+
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100svh;
+    display:flex;
+    justify-content:center;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  /* ---------- ambient background ---------- */
+  .bg-field{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  .blob{ position:absolute; border-radius:50%; filter:blur(70px); opacity:0.55; will-change:transform; }
+  .blob.teal{ width:46vh;height:46vh; background:radial-gradient(circle,var(--glow-teal),transparent 70%); top:-10%;left:-15%; animation:driftA 22s ease-in-out infinite alternate; }
+  .blob.magenta{ width:42vh;height:42vh; background:radial-gradient(circle,var(--glow-magenta),transparent 70%); bottom:-12%;right:-15%; animation:driftB 26s ease-in-out infinite alternate; }
+  @keyframes driftA{ 0%{transform:translate(0,0) scale(1);} 100%{transform:translate(6vw,8vh) scale(1.15);} }
+  @keyframes driftB{ 0%{transform:translate(0,0) scale(1);} 100%{transform:translate(-5vw,-6vh) scale(1.1);} }
+  .grain{
+    position:fixed; inset:-100px; z-index:1; pointer-events:none; opacity:0.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    animation:grainShift 1.4s steps(4) infinite;
+  }
+  @keyframes grainShift{ 0%{transform:translate(0,0);} 25%{transform:translate(-2%,2%);} 50%{transform:translate(2%,-1%);} 75%{transform:translate(-1%,-2%);} 100%{transform:translate(0,0);} }
+
+  /* ---------- shutter intro ---------- */
+  .shutter{ position:fixed; inset:0; z-index:80; display:flex; pointer-events:none; }
+  .shutter div{ flex:1; background:#000; animation:shutterOpen 900ms cubic-bezier(.76,0,.24,1) forwards; animation-delay:250ms; }
+  .shutter div:first-child{transform-origin:left;}
+  .shutter div:last-child{transform-origin:right;}
+  @keyframes shutterOpen{ to{ transform:scaleX(0); } }
+
+  /* ---------- layout ---------- */
+  .page{ position:relative; z-index:2; width:100%; max-width:480px; padding:56px 20px 64px; display:flex; flex-direction:column; align-items:center; }
+  .reveal{ opacity:0; transform:translateY(14px); animation:riseIn 700ms cubic-bezier(.2,.7,.2,1) forwards; }
+  @keyframes riseIn{ to{opacity:1; transform:translateY(0);} }
+
+  /* ---------- profile ---------- */
+  .avatar-wrap{ width:112px;height:112px; border-radius:50%; position:relative; display:flex;align-items:center;justify-content:center; margin-bottom:20px; }
+  .avatar-ring{ position:absolute; inset:-6px; border-radius:50%; background:conic-gradient(from 0deg, var(--teal), var(--magenta), var(--teal)); animation:spin 6s linear infinite; }
+  .avatar-ring::after{ content:""; position:absolute; inset:4px; border-radius:50%; background:var(--bg); }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .avatar-wrap::before{
+    content:""; position:absolute; inset:-16px; border-radius:50%;
+    background:radial-gradient(circle, var(--glow-teal), transparent 70%);
+    opacity:0.6; filter:blur(10px); z-index:-1;
+    animation:pulseGlow 3.2s ease-in-out infinite;
+  }
+  @keyframes pulseGlow{ 0%,100%{ transform:scale(1); opacity:0.5; } 50%{ transform:scale(1.15); opacity:0.85; } }
+  .avatar{ position:relative; width:100px;height:100px; border-radius:50%; background:linear-gradient(155deg,#101c1e,#0a1516 55%,#12191a); display:flex;align-items:center;justify-content:center; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:30px; color:var(--text); z-index:1; overflow:hidden; }
+  .avatar svg{ width:38px; height:38px; opacity:0.9; }
+  .avatar img{ width:100%; height:100%; object-fit:cover; }
+
+  .handle{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:26px; letter-spacing:-0.01em; margin:0; }
+  .role{ color:var(--muted); font-size:14.5px; font-weight:500; margin:6px 0 0; text-align:center; line-height:1.5; }
+
+  /* ---------- generic card ---------- */
+  .card{ width:100%; background:linear-gradient(180deg,var(--panel),var(--panel-2)); border:1px solid var(--border); border-radius:20px; padding:22px; margin-top:22px; position:relative; overflow:hidden; transition:border-color .35s ease, transform .35s ease, box-shadow .35s ease; }
+  .card::before{ content:""; position:absolute; inset:0; background:radial-gradient(420px 160px at 20% -10%, rgba(47,240,196,0.10), transparent 60%); pointer-events:none; }
+  .card-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .card-title{ display:flex; align-items:center; gap:10px; }
+  .card-title h2{ font-family:'Space Grotesk',sans-serif; font-size:19px; font-weight:700; margin:0; }
+  .icon-chip{ width:36px;height:36px; border-radius:11px; display:flex;align-items:center;justify-content:center; background:rgba(47,240,196,0.10); border:1px solid rgba(47,240,196,0.25); flex-shrink:0; transition:transform .3s cubic-bezier(.2,.7,.2,1); }
+  .icon-chip svg{ width:18px;height:18px; }
+  .card-sub{ color:var(--muted); font-size:13.5px; margin:8px 0 0; line-height:1.55; }
+  .count-badge{ font-size:12px; font-weight:600; color:var(--teal); background:rgba(47,240,196,0.09); border:1px solid rgba(47,240,196,0.22); padding:4px 10px; border-radius:100px; white-space:nowrap; display:inline-block; }
+  .count-badge.pop{ animation:badgePop 420ms cubic-bezier(.34,1.56,.64,1); }
+  @keyframes badgePop{ 0%{ transform:scale(1); } 40%{ transform:scale(1.25); } 100%{ transform:scale(1); } }
+
+  /* ---------- portfolio / behance ---------- */
+  .portfolio-card{ text-align:center; padding-top:26px; }
+  .portfolio-card:hover .icon-chip, .portfolio-card:hover .be-logo{ transform:rotate(-6deg) scale(1.05); }
+  .be-logo{ width:52px;height:52px; margin:0 auto 14px; border-radius:14px; background:#0a1213; border:1px solid var(--border-hi); display:flex;align-items:center;justify-content:center; transition:transform .3s cubic-bezier(.2,.7,.2,1); }
+  .be-logo svg{ width:26px;height:26px; }
+  .portfolio-card h2{ font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:700; margin:0; }
+  .portfolio-tag{ color:var(--teal); font-size:12.5px; font-weight:700; letter-spacing:0.04em; margin:10px 0 4px; }
+  .portfolio-card .card-sub{ margin-bottom:18px; }
+  .explore-btn{ position:relative; overflow:hidden; display:inline-flex; align-items:center; gap:8px; padding:12px 26px; border-radius:100px; background:linear-gradient(135deg,var(--teal),#18b89a); color:#04120f; font-weight:700; font-size:14px; text-decoration:none; box-shadow:0 10px 26px -10px rgba(47,240,196,0.55); transition:transform .25s cubic-bezier(.2,.7,.2,1), box-shadow .25s ease; }
+  .explore-btn::after{
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.55) 48%, transparent 66%);
+    transform:translateX(-120%); transition:none;
+  }
+  .explore-btn:hover::after{ animation:sheen 900ms ease; }
+  @keyframes sheen{ to{ transform:translateX(120%); } }
+  .explore-btn:hover{ transform:translateY(-2px) scale(1.03); box-shadow:0 14px 30px -10px rgba(47,240,196,0.7); }
+  .explore-btn:active{ transform:translateY(0) scale(0.98); }
+  .explore-btn svg{ width:14px; height:14px; }
+
+  /* ---------- PROMPTS (flat list) ---------- */
+  .prompts-card{ padding:24px 20px 20px; border-color:rgba(47,240,196,0.18); box-shadow:0 0 0 1px rgba(47,240,196,0.03), 0 30px 60px -30px rgba(47,240,196,0.25); }
+  .prompts-card .card-title h2{ font-size:21px; }
+  .prompts-head{
+    width:100%; background:none; border:none; padding:0; margin:0;
+    color:var(--text); font-family:inherit; cursor:pointer; text-align:left;
+  }
+  .prompts-head .chev{ width:16px;height:16px; color:var(--muted); transition:transform .35s cubic-bezier(.2,.7,.2,1); }
+  .prompts-head.open .chev{ transform:rotate(180deg); color:var(--teal); }
+  .prompt-list{ margin-top:18px; display:flex; flex-direction:column; gap:11px; }
+
+  .prompt-card{
+    background:#0a1213;
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:14px;
+    opacity:0; transform:translateY(10px) scale(0.98);
+    transition:border-color .3s ease, box-shadow .35s ease, transform .35s cubic-bezier(.2,.7,.2,1);
+    position:relative;
+  }
+  .prompt-card.in-view{ animation:promptIn 520ms cubic-bezier(.2,.7,.2,1) forwards; }
+  @keyframes promptIn{ to{ opacity:1; transform:translateY(0) scale(1); } }
+  .prompt-card:hover{
+    border-color:rgba(47,240,196,0.35);
+    box-shadow:0 14px 30px -18px rgba(47,240,196,0.4);
+  }
+
+  .prompt-top{ display:flex; align-items:flex-start; gap:10px; }
+  .prompt-text{ flex:1; min-width:0; font-size:13px; line-height:1.55; color:#c9ddd8; overflow-wrap:anywhere; }
+  .prompt-text b{ display:block; color:var(--text); font-size:13.5px; font-weight:600; margin-bottom:4px; }
+  .copy-btn{ flex-shrink:0; width:31px;height:31px; border-radius:9px; border:1px solid var(--border-hi); background:rgba(255,255,255,0.03); color:var(--muted); display:flex;align-items:center;justify-content:center; cursor:pointer; transition:all .2s ease; }
+  .copy-btn:hover{ border-color:var(--teal); color:var(--teal); background:rgba(47,240,196,0.08); transform:scale(1.08); }
+  .copy-btn:active{ transform:scale(0.92); }
+  .copy-btn.done{ border-color:var(--teal); color:var(--teal); background:rgba(47,240,196,0.14); animation:copyPop 380ms cubic-bezier(.34,1.56,.64,1); }
+  @keyframes copyPop{ 0%{ transform:scale(1); } 45%{ transform:scale(1.22); } 100%{ transform:scale(1); } }
+  .copy-btn svg{ width:14px; height:14px; }
+
+  .reel-link{ margin-top:10px; display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--magenta); text-decoration:none; padding:6px 11px; border-radius:100px; background:rgba(255,61,127,0.08); border:1px solid rgba(255,61,127,0.22); transition:all .25s cubic-bezier(.2,.7,.2,1); }
+  .reel-link:hover{ background:rgba(255,61,127,0.18); transform:translateX(3px); box-shadow:0 6px 16px -8px rgba(255,61,127,0.6); }
+  .reel-link svg{ width:12px;height:12px; transition:transform .25s ease; }
+  .reel-link:hover svg{ transform:scale(1.15); }
+
+  .empty-note{ color:var(--muted-2); font-size:12.5px; padding:6px 2px; }
+
+  /* ---------- instagram ---------- */
+  .insta-card{ display:flex; align-items:center; gap:14px; border-color:rgba(255,61,127,0.16); }
+  .insta-card .icon-chip{ background:rgba(255,61,127,0.10); border-color:rgba(255,61,127,0.28); color:var(--magenta); }
+  .insta-card:hover .icon-chip{ transform:rotate(8deg) scale(1.08); }
+  .insta-info{ flex:1; min-width:0; }
+  .insta-info h2{ font-family:'Space Grotesk',sans-serif; font-size:16.5px; font-weight:700; margin:0 0 2px; }
+  .insta-info p{ margin:0; color:var(--muted); font-size:13px; }
+  .follow-btn{ flex-shrink:0; display:inline-flex; align-items:center; gap:6px; padding:10px 16px; border-radius:100px; background:linear-gradient(135deg,var(--magenta),#ff6a4d); color:#0a0507; font-weight:700; font-size:13.5px; text-decoration:none; box-shadow:0 8px 22px -8px rgba(255,61,127,0.55); transition:transform .25s cubic-bezier(.2,.7,.2,1), box-shadow .25s ease; animation:softBeat 4s ease-in-out infinite; }
+  @keyframes softBeat{ 0%,100%{ box-shadow:0 8px 22px -8px rgba(255,61,127,0.55); } 50%{ box-shadow:0 8px 26px -6px rgba(255,61,127,0.8); } }
+  .follow-btn:hover{ transform:translateY(-2px) scale(1.02); box-shadow:0 12px 26px -8px rgba(255,61,127,0.7); animation-play-state:paused; }
+  .follow-btn:active{ transform:translateY(0) scale(0.98); }
+
+  /* ---------- footer links ---------- */
+  .section-label{ align-self:flex-start; font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:600; color:var(--muted); margin:30px 0 10px 2px; }
+  .link-row{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:15px 16px; border-radius:14px; border:1px solid var(--border); background:rgba(255,255,255,0.015); text-decoration:none; color:var(--text); margin-top:9px; transition:border-color .25s ease, transform .2s ease, background .25s ease; }
+  .link-row:hover{ border-color:var(--border-hi); background:rgba(255,255,255,0.035); transform:translateX(3px); }
+  .link-row span{ font-size:14px; font-weight:600; }
+  .link-row .lr-left{ display:flex; align-items:center; gap:11px; }
+  .link-row svg{ width:16px;height:16px; color:var(--muted); transition:transform .25s ease; }
+  .link-row:hover svg:last-child{ transform:translateX(3px); }
+
+  footer{ margin-top:38px; color:var(--muted-2); font-size:11.5px; text-align:center; }
+
+  /* ---------- admin trigger ---------- */
+  .footer-trigger{ cursor:default; -webkit-user-select:none; user-select:none; }
+
+  /* ---------- admin modal ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; z-index:90;
+    background:rgba(3,6,7,0.72);
+    backdrop-filter:blur(4px);
+    display:none;
+    align-items:flex-end;
+    justify-content:center;
+    padding:0;
+    opacity:0;
+    transition:opacity .25s ease;
+    box-sizing:border-box;
+  }
+  .modal-overlay.show{ display:flex; opacity:1; }
+  @media (min-width:600px){
+    .modal-overlay{ align-items:center; padding:24px; }
+  }
+
+  .modal{
+    width:100%; max-width:460px; max-height:88vh;
+    background:linear-gradient(180deg,#0c1416,#0a1112);
+    border:1px solid var(--border-hi);
+    border-radius:22px 22px 0 0;
+    padding:22px 20px calc(22px + env(safe-area-inset-bottom));
+    overflow-x:hidden;
+    overflow-y:auto;
+    box-sizing:border-box;
+    animation:modalUp 420ms cubic-bezier(.2,.7,.2,1);
+  }
+  @media (min-width:600px){
+    .modal{
+      border-radius:18px;
+      max-height:min(640px, 85vh);
+      box-shadow:0 30px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(47,240,196,0.06);
+      animation:modalPop 320ms cubic-bezier(.2,.7,.2,1);
+    }
+  }
+  @keyframes modalUp{ from{ transform:translateY(30px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+  @keyframes modalPop{ from{ transform:scale(0.96) translateY(8px); opacity:0; } to{ transform:scale(1) translateY(0); opacity:1; } }
+
+  .modal-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+  .modal-head h3{ font-family:'Space Grotesk',sans-serif; font-size:18px; margin:0; min-width:0; }
+  .modal-close{ width:32px;height:32px; flex-shrink:0; border-radius:50%; border:1px solid var(--border-hi); background:transparent; color:var(--muted); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .25s ease; }
+  .modal-close:hover{ color:var(--text); border-color:var(--text); transform:rotate(90deg); }
+  .modal-close svg{ width:16px;height:16px; }
+
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12.5px; font-weight:600; color:var(--muted); margin-bottom:6px; }
+  .field input, .field textarea, .field select{
+    width:100%; background:#0a1213; border:1px solid var(--border-hi); border-radius:10px;
+    padding:10px 12px; color:var(--text); font-family:'Inter',sans-serif; font-size:13.5px;
+    outline:none; transition:border-color .2s ease, box-shadow .2s ease;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus{ border-color:var(--teal); box-shadow:0 0 0 3px rgba(47,240,196,0.12); }
+  .field textarea{ resize:vertical; min-height:60px; max-width:100%; }
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    padding:11px 18px; border-radius:100px; border:none; cursor:pointer;
+    font-weight:700; font-size:13.5px; font-family:'Inter',sans-serif;
+    transition:transform .2s cubic-bezier(.2,.7,.2,1), box-shadow .2s ease;
+  }
+  .btn:hover{ transform:translateY(-1px); }
+  .btn:active{ transform:translateY(0) scale(0.97); }
+  .btn-primary{ background:linear-gradient(135deg,var(--teal),#18b89a); color:#04120f; box-shadow:0 8px 20px -8px rgba(47,240,196,0.5); }
+  .btn-ghost{ background:rgba(255,255,255,0.04); color:var(--text); border:1px solid var(--border-hi); }
+  .btn-danger{ background:rgba(255,61,127,0.1); color:var(--magenta); border:1px solid rgba(255,61,127,0.3); }
+  .btn-block{ width:100%; }
+  .btn-sm{ padding:7px 12px; font-size:12px; }
+
+  .tabbar{ display:flex; flex-wrap:wrap; gap:4px 6px; margin-bottom:18px; border-bottom:1px solid var(--border); padding-bottom:2px; }
+  .tab{ background:none; border:none; color:var(--muted); font-family:'Inter',sans-serif; font-weight:600; font-size:13px; padding:8px 6px; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; transition:color .2s ease, border-color .2s ease; }
+  .tab.active{ color:var(--teal); border-color:var(--teal); }
+  .tab-panel{ display:none; animation:tabFade 280ms ease; }
+  .tab-panel.active{ display:block; }
+  @keyframes tabFade{ from{ opacity:0; transform:translateY(4px); } to{ opacity:1; transform:translateY(0); } }
+
+  .divider{ height:1px; background:var(--border); margin:18px 0; }
+
+  .manage-item{ display:flex; align-items:center; justify-content:space-between; gap:8px; background:#0a1213; border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-top:8px; transition:transform .2s ease, opacity .2s ease; }
+  .manage-item .mi-text{ font-size:12.5px; line-height:1.4; flex:1; min-width:0; overflow-wrap:anywhere; }
+  .manage-item .mi-text b{ display:block; font-size:13px; color:var(--text); }
+  .manage-item .mi-text span{ color:var(--muted-2); font-size:11.5px; }
+  .manage-item .btn-danger{ flex-shrink:0; }
+  .manage-item.removing{ opacity:0; transform:translateX(20px) scale(0.96); }
+
+  .toast{
+    position:fixed; left:50%; bottom:24px; transform:translate(-50%,20px) scale(0.96);
+    background:#0d1517; border:1px solid var(--teal); color:var(--teal);
+    padding:10px 18px; border-radius:100px; font-size:13px; font-weight:600;
+    z-index:120; opacity:0; pointer-events:none; transition:all .3s cubic-bezier(.2,.7,.2,1);
+  }
+  .toast.show{ opacity:1; transform:translate(-50%,0) scale(1); }
+  .toast.error{ border-color:var(--magenta); color:var(--magenta); }
+
+  .avatar-preview{ width:64px;height:64px; border-radius:50%; overflow:hidden; background:#0a1213; border:1px solid var(--border-hi); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .avatar-preview img{ width:100%; height:100%; object-fit:cover; }
+  .avatar-row{ display:flex; align-items:center; gap:14px; margin-bottom:14px; flex-wrap:wrap; }
+  .avatar-row > div{ flex:1; min-width:140px; }
+
+  .lock-wrap{ display:flex; flex-direction:column; align-items:center; padding:20px 0 8px; text-align:center; }
+  .lock-wrap svg{ width:30px;height:30px; color:var(--muted); margin-bottom:10px; animation:lockFloat 3s ease-in-out infinite; }
+  @keyframes lockFloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-4px); } }
+  .lock-wrap p{ color:var(--muted); font-size:13px; margin:0 0 16px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="shutter"><div></div><div></div></div>
+
+  <div class="bg-field">
+    <div class="blob teal"></div>
+    <div class="blob magenta"></div>
+  </div>
+  <div class="grain"></div>
+
+  <main class="page">
+
+    <div class="avatar-wrap reveal" style="animation-delay:.05s">
+      <div class="avatar-ring"></div>
+      <div class="avatar" id="avatarBox">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </div>
+    </div>
+
+    <h1 class="handle reveal" style="animation-delay:.12s">@orkhanmrzedits</h1>
+    <p class="role reveal" id="roleText" style="animation-delay:.18s">Video Editor &amp; Digital Content Creator</p>
+
+    <!-- PORTFOLIO / BEHANCE -->
+    <section class="card portfolio-card reveal" style="animation-delay:.26s">
+      <div class="be-logo">
+        <svg viewBox="0 0 24 24" fill="var(--text)"><path d="M7.8 6.6H2.4v10.8h5.5c2.6 0 4.3-1.3 4.3-3.4 0-1.5-.9-2.5-2.1-2.8 1-.4 1.6-1.3 1.6-2.5 0-2-1.5-3.1-3.9-3.1zM4.9 8.4h2.6c1 0 1.6.5 1.6 1.3 0 .9-.6 1.4-1.6 1.4H4.9V8.4zm0 4.5h2.9c1.1 0 1.8.6 1.8 1.5 0 1-.7 1.6-1.8 1.6H4.9v-3.1zM21.6 8.4h-4.9v1.4h4.9V8.4zM18.9 10.8c-2.5 0-4.2 1.7-4.2 4.1 0 2.5 1.7 4.1 4.3 4.1 1.8 0 3.1-.8 3.8-2.2l-1.8-.6c-.4.7-1.1 1.1-2 1.1-1.2 0-2.1-.8-2.3-2h6.3c0-.1 0-.4 0-.5 0-2.4-1.6-4-4.1-4zm-2.1 3.2c.2-1.1 1-1.7 2.1-1.7 1.1 0 1.8.6 2 1.7h-4.1z"/></svg>
+      </div>
+      <h2>Portfolyo</h2>
+      <p class="portfolio-tag" id="behanceTag">/ORKHANMRZEDITS</p>
+      <p class="card-sub">Son kurgu, renk grading ve reels çalışmalarıma göz at.</p>
+      <a class="explore-btn" id="behanceBtn" href="https://behance.net/orkhanmrzedits" target="_blank" rel="noopener">
+        Keşfet
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+      </a>
+    </section>
+
+    <!-- PROMPTS -->
+    <section class="card prompts-card reveal" style="animation-delay:.34s">
+      <button class="card-head prompts-head" id="promptsHead">
+        <div class="card-title">
+          <div class="icon-chip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.8"><path d="M4 17l6-6-6-6"/><path d="M12 19h8"/></svg>
+          </div>
+          <h2>Prompts</h2>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="count-badge" id="promptCount">0 prompt</span>
+          <svg class="chev" id="promptsChev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+      </button>
+      <p class="card-sub">En son eklenen prompt burada. Tümünü görmek için başlığa dokun.</p>
+
+      <div class="prompt-list" id="promptList"></div>
+      <button class="btn btn-ghost btn-block" id="promptsMoreBtn" style="margin-top:12px;"></button>
+    </section>
+
+    <!-- INSTAGRAM -->
+    <section class="card insta-card reveal" style="animation-delay:.42s">
+      <div class="icon-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1"/></svg>
+      </div>
+      <div class="insta-info">
+        <h2>Instagram</h2>
+        <p id="instaHandle">@orkhanmrzedits</p>
+      </div>
+      <a class="follow-btn" id="instaBtn" href="https://instagram.com/orkhanmrzedits" target="_blank" rel="noopener">Takip Et</a>
+    </section>
+
+    <!-- EXTRA LINKS -->
+    <div class="section-label reveal" style="animation-delay:.48s">Diğer Bağlantılar</div>
+
+    <a class="link-row reveal" id="dmRow" href="#" target="_blank" rel="noopener" style="animation-delay:.52s">
+      <div class="lr-left">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>İşbirliği &amp; Sipariş İçin DM</span>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+    </a>
+
+    <a class="link-row reveal" id="mailRow" href="#" style="animation-delay:.56s">
+      <div class="lr-left">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+        <span id="mailLabel">E-posta ile İletişim</span>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+    </a>
+
+    <footer class="footer-trigger" id="footerTrigger">orkhanmrzedits © 2026</footer>
+  </main>
+
+  <!-- admin modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="modalTitle">Admin Paneli</h3>
+        <button class="modal-close" id="modalClose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- lock screen -->
+      <div id="lockPanel">
+        <div class="lock-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <p>Bu alan sadece hesap sahibi içindir. Devam etmek için giriş yap.</p>
+        </div>
+        <div class="field">
+          <label>E-posta</label>
+          <input type="email" id="pwEmail" placeholder="admin@ornek.com" autocomplete="username">
+        </div>
+        <div class="field">
+          <label>Şifre</label>
+          <input type="password" id="pwInput" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <button class="btn btn-primary btn-block" id="pwSubmit">Giriş Yap</button>
+        <div id="pwError" style="color:var(--magenta);font-size:12.5px;margin-top:10px;text-align:center;display:none;"></div>
+      </div>
+
+      <!-- admin content -->
+      <div id="adminContent" style="display:none;">
+        <div class="tabbar">
+          <button class="tab active" data-tab="profil">Profil</button>
+          <button class="tab" data-tab="prompts">Prompts</button>
+          <button class="tab" data-tab="iletisim">İletişim</button>
+        </div>
+
+        <!-- PROFIL TAB -->
+        <div class="tab-panel active" data-panel="profil">
+          <div class="avatar-row">
+            <div class="avatar-preview" id="avatarPreview">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="26" height="26"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+            <div style="flex:1;">
+              <label class="btn btn-ghost btn-sm" for="avatarFile" style="cursor:pointer;">Görsel Yükle</label>
+              <input type="file" id="avatarFile" accept="image/*" style="display:none;">
+              <div style="font-size:11px;color:var(--muted-2);margin-top:6px;">Kare görsel önerilir, max ~350KB (küçük/sıkıştırılmış bir fotoğraf).</div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Unvan / Rol Metni</label>
+            <input type="text" id="roleInput" placeholder="Video Editor & Digital Content Creator">
+          </div>
+
+          <div class="field">
+            <label>Behance Kullanıcı Adı</label>
+            <input type="text" id="behanceInput" placeholder="orkhanmrzedits">
+          </div>
+
+          <button class="btn btn-primary btn-block" id="saveProfil">Profili Kaydet</button>
+        </div>
+
+        <!-- PROMPTS TAB (flat, no categories) -->
+        <div class="tab-panel" data-panel="prompts">
+          <div class="field">
+            <label>Prompt Başlığı</label>
+            <input type="text" id="promptTitle" placeholder="Örn: Sinematik Portre">
+          </div>
+          <div class="field">
+            <label>Prompt Metni</label>
+            <textarea id="promptText" placeholder="Prompt içeriğini buraya yaz..."></textarea>
+          </div>
+          <div class="field">
+            <label>İlgili Reels Linki (opsiyonel)</label>
+            <input type="text" id="promptReel" placeholder="https://instagram.com/reel/...">
+          </div>
+          <button class="btn btn-primary btn-block" id="addPromptBtn">Prompt Ekle</button>
+
+          <div class="divider"></div>
+          <label style="font-size:12.5px;font-weight:600;color:var(--muted);">Mevcut Promptlar</label>
+          <div id="promptManageList"></div>
+        </div>
+
+        <!-- ILETISIM TAB -->
+        <div class="tab-panel" data-panel="iletisim">
+          <div class="field">
+            <label>Instagram Kullanıcı Adı</label>
+            <input type="text" id="instaInput" placeholder="orkhanmrzedits">
+          </div>
+          <p class="card-sub" style="margin:-6px 0 14px;">İşbirliği/DM linki bu kullanıcı adından otomatik oluşturulur.</p>
+          <div class="field">
+            <label>E-posta Adresi</label>
+            <input type="email" id="emailInput" placeholder="orkhanmrzedits@gmail.com">
+          </div>
+          <button class="btn btn-primary btn-block" id="saveIletisim">İletişimi Kaydet</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  // ====== FIREBASE AYARLARI ======
+  // Firebase konsolundan aldığın firebaseConfig'i buraya yapıştır (Web app kaydı sırasında verilir).
+  const firebaseConfig = {
+    apiKey: "AIzaSyCYoaC6fgkCKu0AVwWS60V054HDZXhlt2c",
+    authDomain: "orkhanmrzedits.firebaseapp.com",
+    projectId: "orkhanmrzedits",
+    storageBucket: "orkhanmrzedits.firebasestorage.app",
+    messagingSenderId: "130948294589",
+    appId: "1:130948294589:web:cdb4e93e933ac0d9a694d4"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const profileRef = db.collection('site').doc('profile');
+  const promptsCol = db.collection('prompts');
+  // ====== FIREBASE AYARLARI SONU ======
+
+  const defaultProfile = {
+    role: "Video Editor & Digital Content Creator",
+    instagramUsername: "orkhanmrzedits",
+    behanceUsername: "orkhanmrzedits",
+    email: "orkhanmrzedits@gmail.com",
+    avatarDataUrl: ""
+  };
+
+  const defaultPrompts = [
+    { id: "p1", title: "Sinematik Portre", text: "cinematic portrait, moody teal and magenta grade, shallow depth of field, 35mm film grain, dramatic rim light", reel: "" },
+    { id: "p2", title: "Şehir Gece Sahnesi", text: "neon-lit city street at night, rain reflections, anamorphic lens flare, cyberpunk color grade, wide shot", reel: "" },
+    { id: "p3", title: "Soyut Arka Plan", text: "abstract liquid gradient background, teal to magenta duotone, smooth flowing motion, minimal noise texture", reel: "" },
+    { id: "p4", title: "Glitch Geçiş", text: "fast RGB split glitch transition, 3-frame digital distortion, chromatic aberration, snap cut on beat", reel: "" },
+    { id: "p5", title: "Zoom Punch", text: "quick zoom punch-in transition, motion blur trail, whip pan easing, landing on downbeat", reel: "" },
+    { id: "p6", title: "Light Leak Geçiş", text: "warm light leak wipe transition, soft bloom overlay, 0.3s duration, screen blend mode", reel: "" },
+    { id: "p7", title: "Teal & Magenta Grade", text: "shadows push teal, highlights push warm magenta, contrast +15, saturation +8, soft filmic curve", reel: "" },
+    { id: "p8", title: "Muted Cinematic Grade", text: "desaturated base -20, lifted blacks, warm midtones, subtle vignette, halation on highlights", reel: "" }
+  ];
+
+  let profile = { ...defaultProfile };
+  let prompts = JSON.parse(JSON.stringify(defaultPrompts));
+  let unlocked = false;
+  let promptsExpanded = false;
+  let usingDefaultPrompts = true; // Firestore'da henüz hiç prompt yoksa varsayılanları gösteririz
+
+  function toast(msg, isError){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (isError ? ' error' : '');
+    setTimeout(() => { t.className = 'toast'; }, 2200);
+  }
+
+
+  // Canlı dinleme: profil ve promptlar artık ayrı yerlerde tutuluyor, ikisi de
+  // her değiştiğinde otomatik güncelleniyor — ziyaretçi sayfayı yenilemek zorunda kalmaz.
+  function startListening(){
+    profileRef.onSnapshot((doc) => {
+      if (doc.exists){
+        profile = { ...defaultProfile, ...doc.data() };
+      }
+      renderAll();
+    }, (err) => {
+      console.error(err);
+      renderAll();
+    });
+
+    promptsCol.orderBy('createdAt', 'asc').onSnapshot((snap) => {
+      if (!snap.empty){
+        usingDefaultPrompts = false;
+        prompts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      } else {
+        usingDefaultPrompts = true;
+        prompts = JSON.parse(JSON.stringify(defaultPrompts));
+      }
+      renderPrompts();
+    }, (err) => {
+      console.error(err);
+      renderPrompts();
+    });
+  }
+
+  async function saveProfile(){
+    try{
+      await profileRef.set(profile, { merge: true });
+      toast('Profil kaydedildi');
+    }catch(e){ toast('Kaydedilemedi: ' + (e.message || 'giriş gerekli'), true); }
+  }
+
+  async function addPromptToDb(promptData){
+    try{
+      await promptsCol.add({ ...promptData, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      return true;
+    }catch(e){ toast('Kaydedilemedi: ' + (e.message || 'giriş gerekli'), true); return false; }
+  }
+
+  async function deletePromptFromDb(id){
+    try{
+      await promptsCol.doc(id).delete();
+      return true;
+    }catch(e){ toast('Silinemedi: ' + (e.message || 'giriş gerekli'), true); return false; }
+  }
+
+  function renderAll(){
+    document.getElementById('roleText').textContent = profile.role;
+    document.getElementById('behanceTag').textContent = '/' + profile.behanceUsername.toUpperCase();
+    document.getElementById('behanceBtn').href = 'https://behance.net/' + profile.behanceUsername;
+    document.getElementById('instaHandle').textContent = '@' + profile.instagramUsername;
+    document.getElementById('instaBtn').href = 'https://instagram.com/' + profile.instagramUsername;
+    document.getElementById('dmRow').href = 'https://instagram.com/direct/t/' + profile.instagramUsername;
+    document.getElementById('mailRow').href = 'mailto:' + profile.email;
+    document.getElementById('mailLabel').textContent = profile.email;
+
+    const avatarBox = document.getElementById('avatarBox');
+    if (profile.avatarDataUrl){
+      avatarBox.innerHTML = '<img src="' + profile.avatarDataUrl + '" alt="avatar">';
+    } else {
+      avatarBox.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
+    }
+
+    renderPrompts();
+  }
+
+  let revealObserver = null;
+  function setupObserver(){
+    if (revealObserver) revealObserver.disconnect();
+    revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting){
+          entry.target.classList.add('in-view');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.prompt-card').forEach(el => revealObserver.observe(el));
+  }
+
+  function renderPrompts(){
+    const list = document.getElementById('promptList');
+    const oldCount = document.getElementById('promptCount').textContent;
+
+    // newest-added first
+    const ordered = [...prompts].reverse();
+    const visible = promptsExpanded ? ordered : ordered.slice(0, 1);
+
+    if (!ordered.length){
+      list.innerHTML = '<div class="empty-note">Henüz prompt eklenmedi. Admin panelinden ekleyebilirsin.</div>';
+    } else {
+      list.innerHTML = visible.map((it, idx) => `
+        <div class="prompt-card" style="transition-delay:${Math.min(idx * 60, 400)}ms;">
+          <div class="prompt-top">
+            <div class="prompt-text"><b>${escapeHtml(it.title)}</b>${escapeHtml(it.text)}</div>
+            <button class="copy-btn" data-text="${escapeHtml(it.text)}" aria-label="Kopyala">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+            </button>
+          </div>
+          ${it.reel ? `<a class="reel-link" href="${escapeAttr(it.reel)}" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+            İlgili Reels'i İzle
+          </a>` : ''}
+        </div>
+      `).join('');
+    }
+
+    const countEl = document.getElementById('promptCount');
+    const newCountText = ordered.length + ' prompt';
+    countEl.textContent = newCountText;
+    if (oldCount !== newCountText){
+      countEl.classList.remove('pop');
+      void countEl.offsetWidth;
+      countEl.classList.add('pop');
+    }
+
+    const moreBtn = document.getElementById('promptsMoreBtn');
+    const remaining = ordered.length - visible.length;
+    if (ordered.length <= 1){
+      moreBtn.style.display = 'none';
+    } else {
+      moreBtn.style.display = 'inline-flex';
+      moreBtn.textContent = promptsExpanded ? 'Daha Az Göster' : `Tüm Promptları Gör (+${remaining})`;
+    }
+
+    const head = document.getElementById('promptsHead');
+    head.classList.toggle('open', promptsExpanded);
+
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const text = btn.getAttribute('data-text');
+        navigator.clipboard?.writeText(text).catch(()=>{});
+        btn.classList.add('done');
+        const original = btn.innerHTML;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 13l4 4L19 7"/></svg>';
+        setTimeout(() => { btn.classList.remove('done'); btn.innerHTML = original; }, 1400);
+      });
+    });
+
+    setupObserver();
+    renderPromptManageList();
+  }
+
+  function togglePromptsExpanded(){
+    promptsExpanded = !promptsExpanded;
+    renderPrompts();
+  }
+
+  function escapeHtml(str){
+    return (str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+  function escapeAttr(str){ return escapeHtml(str); }
+
+  /* ---------- gizli admin tetikleyici: footer yazısına 5 kez arka arkaya dokun ---------- */
+  const overlay = document.getElementById('modalOverlay');
+  let tapCount = 0;
+  let tapTimer = null;
+  document.getElementById('footerTrigger').addEventListener('click', () => {
+    tapCount++;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => { tapCount = 0; }, 1800);
+    if (tapCount >= 5){
+      tapCount = 0;
+      openAdminModal();
+    }
+  });
+
+  function openAdminModal(){
+    overlay.classList.add('show');
+    if (unlocked){
+      document.getElementById('lockPanel').style.display = 'none';
+      document.getElementById('adminContent').style.display = 'block';
+    } else {
+      document.getElementById('lockPanel').style.display = 'block';
+      document.getElementById('adminContent').style.display = 'none';
+    }
+  }
+  document.getElementById('modalClose').addEventListener('click', () => overlay.classList.remove('show'));
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('show'); });
+
+  document.getElementById('pwSubmit').addEventListener('click', tryUnlock);
+  document.getElementById('pwInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') tryUnlock(); });
+
+  // Firebase oturum durumunu sürekli izler: giriş yapılmışsa unlocked=true olur.
+  auth.onAuthStateChanged((user) => {
+    unlocked = !!user;
+  });
+
+  async function tryUnlock(){
+    const email = document.getElementById('pwEmail').value.trim();
+    const pw = document.getElementById('pwInput').value;
+    const errBox = document.getElementById('pwError');
+    errBox.style.display = 'none';
+    if (!email || !pw){ errBox.textContent = 'E-posta ve şifre gerekli'; errBox.style.display = 'block'; return; }
+    try{
+      await auth.signInWithEmailAndPassword(email, pw);
+      unlocked = true;
+      document.getElementById('lockPanel').style.display = 'none';
+      document.getElementById('adminContent').style.display = 'block';
+      document.getElementById('pwInput').value = '';
+      fillAdminForm();
+    } catch(e){
+      errBox.textContent = 'Giriş başarısız: e-posta veya şifre hatalı';
+      errBox.style.display = 'block';
+    }
+  }
+
+  /* ---------- admin: tabs ---------- */
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelector(`.tab-panel[data-panel="${tab.dataset.tab}"]`).classList.add('active');
+    });
+  });
+
+  function fillAdminForm(){
+    document.getElementById('roleInput').value = profile.role;
+    document.getElementById('behanceInput').value = profile.behanceUsername;
+    document.getElementById('instaInput').value = profile.instagramUsername;
+    document.getElementById('emailInput').value = profile.email;
+    const preview = document.getElementById('avatarPreview');
+    preview.innerHTML = profile.avatarDataUrl
+      ? '<img src="' + profile.avatarDataUrl + '" alt="avatar">'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="26" height="26"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
+    renderPromptManageList();
+  }
+
+  /* ---------- admin: avatar upload ---------- */
+  document.getElementById('avatarFile').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 350 * 1024){
+      toast('Görsel çok büyük (max ~350KB), önce sıkıştır', true);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      profile.avatarDataUrl = reader.result;
+      fillAdminForm();
+    };
+    reader.readAsDataURL(file);
+  });
+
+  /* ---------- admin: save profil ---------- */
+  document.getElementById('saveProfil').addEventListener('click', async () => {
+    profile.role = document.getElementById('roleInput').value.trim() || defaultProfile.role;
+    profile.behanceUsername = (document.getElementById('behanceInput').value.trim() || defaultProfile.behanceUsername).replace(/^@/,'');
+    await saveProfile();
+    renderAll();
+  });
+
+  /* ---------- admin: save iletisim ---------- */
+  document.getElementById('saveIletisim').addEventListener('click', async () => {
+    profile.instagramUsername = (document.getElementById('instaInput').value.trim() || defaultProfile.instagramUsername).replace(/^@/,'');
+    profile.email = document.getElementById('emailInput').value.trim() || defaultProfile.email;
+    await saveProfile();
+    renderAll();
+  });
+
+  /* ---------- admin: prompts (Firestore koleksiyonu) ---------- */
+  document.getElementById('addPromptBtn').addEventListener('click', async () => {
+    const title = document.getElementById('promptTitle').value.trim();
+    const text = document.getElementById('promptText').value.trim();
+    const reel = document.getElementById('promptReel').value.trim();
+    if (!title || !text){ toast('Başlık ve prompt metnini gir', true); return; }
+    const ok = await addPromptToDb({ title, text, reel });
+    if (ok){
+      document.getElementById('promptTitle').value = '';
+      document.getElementById('promptText').value = '';
+      document.getElementById('promptReel').value = '';
+      toast('Prompt eklendi');
+    }
+  });
+
+  function renderPromptManageList(){
+    const wrap = document.getElementById('promptManageList');
+    if (!wrap) return;
+    if (!prompts.length){
+      wrap.innerHTML = '<div style="color:var(--muted-2);font-size:12.5px;margin-top:8px;">Henüz prompt eklenmedi.</div>';
+      return;
+    }
+    wrap.innerHTML = prompts.map(it => `
+      <div class="manage-item" data-item="${it.id}">
+        <div class="mi-text"><b>${escapeHtml(it.title)}</b><span>${it.reel ? 'reels linki var' : 'reels linki yok'}</span></div>
+        <button class="btn btn-danger btn-sm" data-item="${it.id}">Sil</button>
+      </div>
+    `).join('');
+
+    wrap.querySelectorAll('.btn-danger').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const itemId = btn.getAttribute('data-item');
+        if (usingDefaultPrompts){
+          // Henüz Firestore'da hiç prompt yok, ekrandaki örnek promptları siliyor —
+          // Firestore'da silinecek gerçek bir kayıt olmadığı için sadece uyarı verelim.
+          toast('Bu bir örnek prompt, önce en az bir gerçek prompt eklemelisin', true);
+          return;
+        }
+        const row = wrap.querySelector(`.manage-item[data-item="${itemId}"]`);
+        if (row) row.classList.add('removing');
+        setTimeout(async () => {
+          await deletePromptFromDb(itemId);
+          toast('Prompt silindi');
+        }, 200);
+      });
+    });
+  }
+
+  document.getElementById('promptsHead').addEventListener('click', togglePromptsExpanded);
+  document.getElementById('promptsMoreBtn').addEventListener('click', togglePromptsExpanded);
+
+  startListening();
+</script>
+
+</body>
+</html>
