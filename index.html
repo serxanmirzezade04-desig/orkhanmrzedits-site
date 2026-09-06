@@ -514,6 +514,9 @@
 
         <!-- PROFIL TAB -->
         <div class="tab-panel active" data-panel="profil">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+            Toplam ziyaret: <b id="visitCount" style="color:var(--teal);font-weight:600;">—</b>
+          </div>
           <div class="avatar-row">
             <div class="avatar-preview" id="avatarPreview">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="26" height="26"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -618,6 +621,7 @@
   const db = firebase.firestore();
   const profileRef = db.collection('site').doc('profile');
   const promptsCol = db.collection('prompts');
+  const statsRef = db.collection('site').doc('stats'); // basit ziyaret sayacı
   // ====== FIREBASE AYARLARI SONU ======
 
   const defaultProfile = {
@@ -652,6 +656,26 @@
     setTimeout(() => { t.className = 'toast'; }, 2200);
   }
 
+
+  /* ---------- basit ziyaret sayacı ---------- */
+  // Sayfa her açıldığında site/stats dokümanındaki "visits" alanı atomik olarak +1 artar.
+  // Herkes için çalışır (admin girişi gerekmez). Sayı yalnızca admin panelinde gösterilir.
+  function countVisit(){
+    statsRef.set(
+      { visits: firebase.firestore.FieldValue.increment(1) },
+      { merge: true }
+    ).catch(err => console.warn('ziyaret sayacı güncellenemedi', err));
+  }
+
+  // Admin panelinde toplam ziyareti Firestore'dan çekip gösterir.
+  function refreshVisitStat(){
+    const el = document.getElementById('visitCount');
+    if (!el) return;
+    statsRef.get().then(doc => {
+      const n = (doc.exists && typeof doc.data().visits === 'number') ? doc.data().visits : 0;
+      el.textContent = n.toLocaleString('tr-TR');
+    }).catch(() => { el.textContent = '—'; });
+  }
 
   // Canlı dinleme: profil ve promptlar artık ayrı yerlerde tutuluyor, ikisi de
   // her değiştiğinde otomatik güncelleniyor — ziyaretçi sayfayı yenilemek zorunda kalmaz.
@@ -875,6 +899,7 @@
     if (unlocked){
       document.getElementById('lockPanel').style.display = 'none';
       document.getElementById('adminContent').style.display = 'block';
+      refreshVisitStat();
     } else {
       document.getElementById('lockPanel').style.display = 'block';
       document.getElementById('adminContent').style.display = 'none';
@@ -930,6 +955,7 @@
       ? '<img src="' + profile.avatarDataUrl + '" alt="avatar">'
       : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="26" height="26"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
     renderPromptManageList();
+    refreshVisitStat();
   }
 
   /* ---------- admin: avatar upload (otomatik resize + sıkıştırma) ---------- */
@@ -1068,6 +1094,7 @@
   document.getElementById('promptsHead').addEventListener('click', togglePromptsExpanded);
   document.getElementById('promptsMoreBtn').addEventListener('click', togglePromptsExpanded);
 
+  countVisit();
   startListening();
 </script>
 
