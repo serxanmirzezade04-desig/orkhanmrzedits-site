@@ -131,36 +131,122 @@
   .prompts-head.open .chev{ transform:rotate(180deg); color:var(--teal); }
   .prompt-list{ margin-top:18px; display:flex; flex-direction:column; gap:11px; }
 
+  /* kompakt prompt kartı — dokununca detay modalı açılır */
   .prompt-card{
+    width:100%; margin:0;
     background:#0a1213;
     border:1px solid var(--border);
     border-radius:14px;
     padding:14px;
+    display:flex; align-items:center; gap:10px;
+    font-family:inherit; text-align:left; color:var(--text);
+    cursor:pointer;
     opacity:0; transform:translateY(10px) scale(0.98);
-    transition:border-color .3s ease, box-shadow .35s ease, transform .35s cubic-bezier(.2,.7,.2,1);
+    transition:border-color .3s ease, box-shadow .35s ease, background .25s ease, transform .35s cubic-bezier(.2,.7,.2,1);
     position:relative;
   }
   .prompt-card.in-view{ animation:promptIn 520ms cubic-bezier(.2,.7,.2,1) forwards; }
   @keyframes promptIn{ to{ opacity:1; transform:translateY(0) scale(1); } }
   .prompt-card:hover{
     border-color:rgba(47,240,196,0.35);
+    background:#0b1516;
     box-shadow:0 14px 30px -18px rgba(47,240,196,0.4);
   }
+  .prompt-card:active{ transform:scale(0.985); }
+  .prompt-card-title{
+    flex:1; min-width:0;
+    font-size:13.5px; font-weight:600; line-height:1.4;
+    color:var(--text); overflow-wrap:anywhere;
+  }
+  .prompt-card .pc-arrow{
+    flex-shrink:0; width:15px; height:15px; color:var(--muted-2);
+    transition:transform .3s cubic-bezier(.2,.7,.2,1), color .3s ease;
+  }
+  .prompt-card:hover .pc-arrow{ transform:translateX(3px); color:var(--teal); }
 
-  .prompt-top{ display:flex; align-items:flex-start; gap:10px; }
-  .prompt-text{ flex:1; min-width:0; font-size:13px; line-height:1.55; color:#c9ddd8; overflow-wrap:anywhere; }
-  .prompt-text b{ display:block; color:var(--text); font-size:13.5px; font-weight:600; margin-bottom:4px; }
-  .copy-btn{ flex-shrink:0; width:31px;height:31px; border-radius:9px; border:1px solid var(--border-hi); background:rgba(255,255,255,0.03); color:var(--muted); display:flex;align-items:center;justify-content:center; cursor:pointer; transition:all .2s ease; }
-  .copy-btn:hover{ border-color:var(--teal); color:var(--teal); background:rgba(47,240,196,0.08); transform:scale(1.08); }
-  .copy-btn:active{ transform:scale(0.92); }
-  .copy-btn.done{ border-color:var(--teal); color:var(--teal); background:rgba(47,240,196,0.14); animation:copyPop 380ms cubic-bezier(.34,1.56,.64,1); }
-  @keyframes copyPop{ 0%{ transform:scale(1); } 45%{ transform:scale(1.22); } 100%{ transform:scale(1); } }
-  .copy-btn svg{ width:14px; height:14px; }
+  /* ---------- prompt detay modalı ---------- */
+  .pmodal-overlay{
+    position:fixed; inset:0; z-index:100;
+    display:none;
+    align-items:center; justify-content:center;
+    padding:20px;
+    background:rgba(3,6,7,0.74);
+    backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
+    box-sizing:border-box;
+  }
+  .pmodal-overlay.show{ display:flex; animation:pmodalFade .28s cubic-bezier(.2,.7,.2,1); }
+  @keyframes pmodalFade{ from{ opacity:0; } to{ opacity:1; } }
 
-  .reel-link{ margin-top:10px; display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--magenta); text-decoration:none; padding:6px 11px; border-radius:100px; background:rgba(255,61,127,0.08); border:1px solid rgba(255,61,127,0.22); transition:all .25s cubic-bezier(.2,.7,.2,1); }
-  .reel-link:hover{ background:rgba(255,61,127,0.18); transform:translateX(3px); box-shadow:0 6px 16px -8px rgba(255,61,127,0.6); }
-  .reel-link svg{ width:12px;height:12px; transition:transform .25s ease; }
-  .reel-link:hover svg{ transform:scale(1.15); }
+  .pmodal{
+    width:100%; max-width:440px;
+    max-height:min(82vh, 720px);
+    display:flex; flex-direction:column;
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid rgba(47,240,196,0.22);
+    border-radius:20px;
+    padding:20px 20px calc(20px + env(safe-area-inset-bottom));
+    box-sizing:border-box;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,0.65), 0 0 0 1px rgba(47,240,196,0.05), 0 0 60px -24px rgba(47,240,196,0.28);
+  }
+  .pmodal-overlay.show .pmodal{ animation:pmodalIn .34s cubic-bezier(.2,.7,.2,1); }
+  @keyframes pmodalIn{ from{ opacity:0; transform:scale(0.94) translateY(10px); } to{ opacity:1; transform:scale(1) translateY(0); } }
+
+  .pmodal-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:14px; }
+  .pmodal-title{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:20px; font-weight:700; line-height:1.25;
+    margin:0; color:var(--text); min-width:0; overflow-wrap:anywhere;
+  }
+  .pmodal-close{
+    flex-shrink:0; width:32px; height:32px; border-radius:50%;
+    border:1px solid var(--border-hi); background:transparent; color:var(--muted);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    transition:color .25s ease, border-color .25s ease, transform .25s ease;
+  }
+  .pmodal-close:hover{ color:var(--text); border-color:var(--text); transform:rotate(90deg); }
+  .pmodal-close svg{ width:16px; height:16px; }
+
+  .pmodal-body{
+    flex:1 1 auto; min-height:0;
+    overflow-y:auto; -webkit-overflow-scrolling:touch;
+    background:#0a1213;
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:14px 15px;
+    font-size:13.5px; line-height:1.6; color:#c9ddd8;
+    white-space:pre-wrap; overflow-wrap:anywhere;
+  }
+  .pmodal-body::-webkit-scrollbar{ width:8px; }
+  .pmodal-body::-webkit-scrollbar-thumb{ background:rgba(47,240,196,0.25); border-radius:100px; }
+  .pmodal-body::-webkit-scrollbar-track{ background:transparent; }
+
+  .pmodal-actions{ margin-top:16px; display:flex; flex-direction:column; gap:10px; flex-shrink:0; }
+  .pmodal-copy{
+    width:100%;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:13px 20px; border:none; border-radius:100px; cursor:pointer;
+    font-family:'Inter',sans-serif; font-weight:700; font-size:14px;
+    background:linear-gradient(135deg,var(--teal),#18b89a); color:#04120f;
+    box-shadow:0 10px 26px -10px rgba(47,240,196,0.55);
+    transition:transform .22s cubic-bezier(.2,.7,.2,1), box-shadow .22s ease;
+  }
+  .pmodal-copy:hover{ transform:translateY(-2px); box-shadow:0 14px 30px -10px rgba(47,240,196,0.7); }
+  .pmodal-copy:active{ transform:translateY(0) scale(0.98); }
+  .pmodal-copy.done{ animation:copyPop 380ms cubic-bezier(.34,1.56,.64,1); }
+  @keyframes copyPop{ 0%{ transform:scale(1); } 45%{ transform:scale(1.04); } 100%{ transform:scale(1); } }
+  .pmodal-copy svg{ width:15px; height:15px; }
+
+  .pmodal-reel{
+    width:100%;
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    padding:11px 18px; border-radius:100px; text-decoration:none;
+    font-weight:600; font-size:13px; color:var(--magenta);
+    background:rgba(255,61,127,0.08);
+    border:1px solid rgba(255,61,127,0.22);
+    transition:background .25s ease, transform .25s cubic-bezier(.2,.7,.2,1), box-shadow .25s ease;
+  }
+  .pmodal-reel:hover{ background:rgba(255,61,127,0.18); transform:translateY(-1px); box-shadow:0 8px 20px -8px rgba(255,61,127,0.55); }
+  .pmodal-reel svg{ width:13px; height:13px; }
 
   .empty-note{ color:var(--muted-2); font-size:12.5px; padding:6px 2px; }
 
@@ -435,7 +521,7 @@
             <div style="flex:1;">
               <label class="btn btn-ghost btn-sm" for="avatarFile" style="cursor:pointer;">Görsel Yükle</label>
               <input type="file" id="avatarFile" accept="image/*" style="display:none;">
-              <div style="font-size:11px;color:var(--muted-2);margin-top:6px;">Kare görsel önerilir, max ~350KB (küçük/sıkıştırılmış bir fotoğraf).</div>
+              <div style="font-size:11px;color:var(--muted-2);margin-top:6px;">Telefonundan normal bir fotoğraf seç — otomatik olarak kare, küçük boyuta getirilip sıkıştırılır.</div>
             </div>
           </div>
 
@@ -486,6 +572,29 @@
           </div>
           <button class="btn btn-primary btn-block" id="saveIletisim">İletişimi Kaydet</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- prompt detay modalı -->
+  <div class="pmodal-overlay" id="promptModalOverlay" aria-hidden="true">
+    <div class="pmodal" role="dialog" aria-modal="true" aria-labelledby="promptModalTitle">
+      <div class="pmodal-head">
+        <h3 class="pmodal-title" id="promptModalTitle"></h3>
+        <button class="pmodal-close" id="promptModalClose" type="button" aria-label="Kapat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="pmodal-body" id="promptModalText" tabindex="0"></div>
+      <div class="pmodal-actions">
+        <button class="pmodal-copy" id="promptModalCopy" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          <span id="promptModalCopyLabel">Prompt'u Kopyala</span>
+        </button>
+        <a class="pmodal-reel" id="promptModalReel" href="#" target="_blank" rel="noopener" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+          İlgili Reels'i İzle
+        </a>
       </div>
     </div>
   </div>
@@ -639,18 +748,10 @@
       list.innerHTML = '<div class="empty-note">Henüz prompt eklenmedi. Admin panelinden ekleyebilirsin.</div>';
     } else {
       list.innerHTML = visible.map((it, idx) => `
-        <div class="prompt-card" style="transition-delay:${Math.min(idx * 60, 400)}ms;">
-          <div class="prompt-top">
-            <div class="prompt-text"><b>${escapeHtml(it.title)}</b>${escapeHtml(it.text)}</div>
-            <button class="copy-btn" data-text="${escapeHtml(it.text)}" aria-label="Kopyala">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
-            </button>
-          </div>
-          ${it.reel ? `<a class="reel-link" href="${escapeAttr(it.reel)}" target="_blank" rel="noopener">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>
-            İlgili Reels'i İzle
-          </a>` : ''}
-        </div>
+        <button class="prompt-card" type="button" data-id="${escapeAttr(it.id)}" style="transition-delay:${Math.min(idx * 60, 400)}ms;">
+          <span class="prompt-card-title">${escapeHtml(it.title)}</span>
+          <svg class="pc-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
       `).join('');
     }
 
@@ -675,21 +776,75 @@
     const head = document.getElementById('promptsHead');
     head.classList.toggle('open', promptsExpanded);
 
-    document.querySelectorAll('.copy-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const text = btn.getAttribute('data-text');
-        navigator.clipboard?.writeText(text).catch(()=>{});
-        btn.classList.add('done');
-        const original = btn.innerHTML;
-        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 13l4 4L19 7"/></svg>';
-        setTimeout(() => { btn.classList.remove('done'); btn.innerHTML = original; }, 1400);
+    // karta dokununca detay modalını aç
+    document.querySelectorAll('.prompt-card').forEach(cardBtn => {
+      cardBtn.addEventListener('click', () => {
+        const it = prompts.find(p => p.id === cardBtn.dataset.id);
+        if (it) openPromptModal(it);
       });
     });
 
     setupObserver();
     renderPromptManageList();
   }
+
+  /* ---------- prompt detay modalı ---------- */
+  const promptModalOverlay = document.getElementById('promptModalOverlay');
+  const promptModalTitle = document.getElementById('promptModalTitle');
+  const promptModalTextBox = document.getElementById('promptModalText');
+  const promptModalCopyBtn = document.getElementById('promptModalCopy');
+  const promptModalCopyLabel = document.getElementById('promptModalCopyLabel');
+  const promptModalReel = document.getElementById('promptModalReel');
+  let promptModalText = '';
+  let promptModalCopyTimer = null;
+
+  function openPromptModal(it){
+    promptModalText = it.text || '';
+    promptModalTitle.textContent = it.title || 'Prompt';
+    promptModalTextBox.textContent = promptModalText;
+    promptModalTextBox.scrollTop = 0;
+
+    if (it.reel){
+      promptModalReel.href = it.reel;
+      promptModalReel.hidden = false;
+    } else {
+      promptModalReel.hidden = true;
+      promptModalReel.removeAttribute('href');
+    }
+
+    clearTimeout(promptModalCopyTimer);
+    promptModalCopyBtn.classList.remove('done');
+    promptModalCopyLabel.textContent = "Prompt'u Kopyala";
+
+    promptModalOverlay.classList.add('show');
+    promptModalOverlay.setAttribute('aria-hidden', 'false');
+  }
+
+  function closePromptModal(){
+    promptModalOverlay.classList.remove('show');
+    promptModalOverlay.setAttribute('aria-hidden', 'true');
+  }
+
+  document.getElementById('promptModalClose').addEventListener('click', closePromptModal);
+  promptModalOverlay.addEventListener('click', (e) => {
+    if (e.target === promptModalOverlay) closePromptModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && promptModalOverlay.classList.contains('show')) closePromptModal();
+  });
+
+  promptModalCopyBtn.addEventListener('click', () => {
+    navigator.clipboard?.writeText(promptModalText).catch(()=>{});
+    promptModalCopyBtn.classList.remove('done');
+    void promptModalCopyBtn.offsetWidth;
+    promptModalCopyBtn.classList.add('done');
+    promptModalCopyLabel.textContent = 'Kopyalandı ✓';
+    clearTimeout(promptModalCopyTimer);
+    promptModalCopyTimer = setTimeout(() => {
+      promptModalCopyBtn.classList.remove('done');
+      promptModalCopyLabel.textContent = "Prompt'u Kopyala";
+    }, 1600);
+  });
 
   function togglePromptsExpanded(){
     promptsExpanded = !promptsExpanded;
@@ -777,20 +932,73 @@
     renderPromptManageList();
   }
 
-  /* ---------- admin: avatar upload ---------- */
-  document.getElementById('avatarFile').addEventListener('change', (e) => {
+  /* ---------- admin: avatar upload (otomatik resize + sıkıştırma) ---------- */
+  // Kullanıcı hangi boyutta fotoğraf seçerse seçsin, tarayıcıda canvas ile
+  // merkezden kare kırpılır, en fazla 500x500px'e küçültülür ve Firestore'un
+  // 1MB doküman limitine takılmamak için ~800KB altına inene kadar JPEG kalitesi
+  // kademeli düşürülerek sıkıştırılır. Kullanıcının kendi sıkıştırma yapmasına gerek yok.
+  const AVATAR_MAX_PX = 500;
+  const AVATAR_TARGET_BYTES = 800 * 1024;
+  const AVATAR_HARD_LIMIT = 20 * 1024 * 1024; // sadece aşırı büyük dosyaları reddet
+
+  function dataUrlBytes(dataUrl){
+    const i = dataUrl.indexOf(',');
+    return Math.ceil((dataUrl.length - i - 1) * 3 / 4);
+  }
+
+  function compressAvatar(file){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const objUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objUrl);
+        try{
+          // merkezden kare kırpma
+          const srcSide = Math.min(img.naturalWidth, img.naturalHeight);
+          const sx = (img.naturalWidth - srcSide) / 2;
+          const sy = (img.naturalHeight - srcSide) / 2;
+          const side = Math.min(srcSide, AVATAR_MAX_PX); // asla büyütme
+
+          const canvas = document.createElement('canvas');
+          canvas.width = canvas.height = side;
+          const ctx = canvas.getContext('2d');
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(img, sx, sy, srcSide, srcSide, 0, 0, side, side);
+
+          let q = 0.75;
+          let out = canvas.toDataURL('image/jpeg', q);
+          while (dataUrlBytes(out) > AVATAR_TARGET_BYTES && q > 0.3){
+            q = Math.round((q - 0.1) * 100) / 100;
+            out = canvas.toDataURL('image/jpeg', q);
+          }
+          resolve(out);
+        }catch(err){ reject(err); }
+      };
+      img.onerror = () => { URL.revokeObjectURL(objUrl); reject(new Error('decode')); };
+      img.src = objUrl;
+    });
+  }
+
+  document.getElementById('avatarFile').addEventListener('change', async (e) => {
     const file = e.target.files[0];
+    e.target.value = ''; // aynı dosya tekrar seçilebilsin
     if (!file) return;
-    if (file.size > 350 * 1024){
-      toast('Görsel çok büyük (max ~350KB), önce sıkıştır', true);
+    if (!file.type || file.type.indexOf('image/') !== 0){
+      toast('Lütfen bir görsel dosyası seç', true);
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      profile.avatarDataUrl = reader.result;
+    if (file.size > AVATAR_HARD_LIMIT){
+      toast('Görsel çok büyük (20MB üstü), daha küçük bir fotoğraf seç', true);
+      return;
+    }
+    try{
+      const dataUrl = await compressAvatar(file);
+      profile.avatarDataUrl = dataUrl;
       fillAdminForm();
-    };
-    reader.readAsDataURL(file);
+      toast('Görsel hazır, kaydetmeyi unutma');
+    }catch(err){
+      toast('Görsel işlenemedi, başka bir fotoğraf dene', true);
+    }
   });
 
   /* ---------- admin: save profil ---------- */
